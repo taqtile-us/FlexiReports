@@ -1,17 +1,12 @@
-import XlsxTemplate from 'xlsx-template';
+import XlsxTemplate from 'xlsx-template-ex';
 import path from 'path';
-import { readFile, writeFile } from 'fs/promises';
+import { writeFile } from 'fs/promises';
 
 export const writeDataToExcel = async (dataToFill: any, templatePath: string) => {
   const filePath = 'uploads/report.xlsx';
-  const data = await readFile(path.join(templatePath));
+  const buffer: any = await XlsxTemplate.xlsxBuildByTemplate(dataToFill, path.join(templatePath));
 
-  const template = new XlsxTemplate(data);
-  const sheetNumber = 1;
+  await writeFile(filePath, buffer, 'binary');
 
-  template.substitute(sheetNumber, dataToFill);
-
-  const binaryFileData = template.generate();
-  await writeFile(filePath, binaryFileData, 'binary');
   return filePath;
 };
