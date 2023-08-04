@@ -1,4 +1,4 @@
-import XlsxTemplate from 'xlsx-template-ex';
+const XlsxTemplate = require('xlsx-template-ex');
 import path from 'path';
 import { writeFile } from 'fs/promises';
 
