@@ -2,11 +2,10 @@ const XlsxTemplate = require('xlsx-template-ex');
 import path from 'path';
 import { writeFile } from 'fs/promises';
 
-export const writeDataToExcel = async (dataToFill: any, templatePath: string) => {
-  const filePath = 'uploads/report.xlsx';
+export const writeDataToExcel = async (dataToFill: any, templatePath: string, reportPath: string) => {
   const buffer: any = await XlsxTemplate.xlsxBuildByTemplate(dataToFill, path.join(templatePath));
 
-  await writeFile(filePath, buffer, 'binary');
+  await writeFile(reportPath, buffer, 'binary');
 
-  return filePath;
+  return reportPath;
 };

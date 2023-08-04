@@ -35,9 +35,9 @@ const getComments = async (workbook: ExcelWorkbook): Promise<ExcelComments> => {
   return coords;
 };
 
-const getCoordsOfFormulaCell = async (path: string): Promise<ExcelFormulas> => {
+const getCoordsOfFormulaCell = async (reportPath: string): Promise<ExcelFormulas> => {
   const workbook: ExcelWorkbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(path);
+  await workbook.xlsx.readFile(reportPath);
   const worksheet = workbook.getWorksheet(1);
   const coords: ExcelFormulas = {};
   worksheet.eachRow({ includeEmpty: false }, (row) => {
@@ -55,14 +55,14 @@ const getCoordsOfFormulaCell = async (path: string): Promise<ExcelFormulas> => {
   return coords;
 };
 
-const generateReportWithFormula = async (path: string, formulas: ExcelFormulas) => {
+const generateReportWithFormula = async (reportPath: string, formulas: ExcelFormulas) => {
   try {
     const workbook: ExcelWorkbook = new ExcelJS.Workbook();
     const formulasData = Object.values(formulas);
     if (!formulasData.length) {
       return;
     }
-    await workbook.xlsx.readFile(path);
+    await workbook.xlsx.readFile(reportPath);
     const worksheet = workbook.getWorksheet(1);
     formulasData.forEach((formulaData) => {
       const formula = formulaData.value.toString();
@@ -87,7 +87,7 @@ const generateReportWithFormula = async (path: string, formulas: ExcelFormulas) 
       }
     });
 
-    await workbook.xlsx.writeFile(path);
+    await workbook.xlsx.writeFile(reportPath);
   } catch (e) {
     console.log(e, 'generate report error');
     return false;
