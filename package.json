@@ -4,7 +4,7 @@
   "description": "",
   "main": "./lib/index.js",
   "exports": {
-    "import": "./lib/index.js"
+    "require": "./lib/index.js"
   },
   "scripts": {
     "build": "tsc"
