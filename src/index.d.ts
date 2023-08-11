@@ -1,1 +1,2 @@
-export default type generate = () => {};
+export default type // @ts-ignore
+generate = () => {}
