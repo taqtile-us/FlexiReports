@@ -1,1 +1,1 @@
-export default type generate = () => {}
+export default type generate = () => {};
