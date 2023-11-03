@@ -1,0 +1,17 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "coords.js",
+  "scripts": {
+    "dev": "nodemon test.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "flexisheet": "git+https://github.com/taqtile-us/FlexiReports",
+    "nodemon": "^3.0.1",
+    "typescript": "^5.2.2"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,1 @@
+export interface IComplexVariable {entityName: string, fieldName: string, type: string, address: string}
