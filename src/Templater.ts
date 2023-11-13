@@ -10,7 +10,7 @@ import {
     parseLetterFromString,
     isItRowFormula, replaceSpecificNumberInFormula, addDifferenceToTheLastNumber
 } from "./Parser";
-import {IDetail, IMaster, IDetails, IFormulas, IStaticVariables} from "./types";
+import {IDetail, IMaster, IDetails, IFormulas, IStaticVariables, ISimpleVariables} from "./types";
 
 const cellFont = { name: 'Arial', size: 11 };
 
@@ -45,7 +45,7 @@ async function parse(worksheet: Workbook.Worksheet) {
                 const simpleVariable = getSimpleVariable(cell);
                 if (simpleVariable) {
                     createArrayIfNotExist(simpleVariables, simpleVariable.variable)
-                    simpleVariables[simpleVariable.variable].push({address: simpleVariable.address, alignment: cell.alignment})
+                    simpleVariables[simpleVariable.variable].push({address: simpleVariable.address, alignment: cell.alignment, variable: simpleVariable.variable})
                 }
                 const complexVariable: IDetail | null = getComplexVariable(cell);
                 if (complexVariable) {
@@ -151,12 +151,30 @@ async function putMasterDetail(worksheet: Workbook.Worksheet, master: IMaster, d
     }
 }
 
+async function putSimpleVariables(worksheet: Workbook.Worksheet, data: any, simpleVariables: ISimpleVariables) {
+    try {
+        for (let variable in simpleVariables) {
+            if (data[variable]) {
+                simpleVariables[variable].forEach((simpleVariable) => {
+                   const variableCell = worksheet.getCell(simpleVariable.address);
+                    variableCell.value = data[variable];
+                    variableCell.alignment = simpleVariable.alignment;
+                })
+            }
+        }
+    } catch (err) {
+        console.error('Error put simple variables to the file:', err);
+        return null;
+    }
+}
+
 const buildTemplate = async (dataToFill: {}, path: string) => {
     const {workbook, workSheet}: any = await readFile(path);
     const {master, details, simpleVariables, formulas, staticVariables} = await parse(workSheet);
     const masterTyped: IMaster = master;
     const detailsTyped: IDetails = details;
     // put simple variables
+    putSimpleVariables(workSheet, dataToFill, simpleVariables)
 
     // put master-details
     await putMasterDetail(workSheet, masterTyped, detailsTyped, dataToFill, formulas, staticVariables)

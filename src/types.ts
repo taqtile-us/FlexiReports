@@ -31,6 +31,16 @@ export interface IStaticVariables {
   [key: string]: IStaticVariable;
 }
 
+interface ISimpleVariable {
+  variable: string;
+  address: string;
+  alignment: IAlignment
+}
+
+export interface ISimpleVariables {
+  [key: string]: ISimpleVariable[];
+}
+
 
 export interface IDetail {
   entityName: string;
