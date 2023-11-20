@@ -1,13 +1,8 @@
-import ExcelJS from 'exceljs';
-import { Workbook } from 'exceljs/index.d';
 import { writeDataToExcel } from './Templater';
 
-export const generateExcelReport = async (dataToFill: any, templatePath: string, reportPath: string) => {
+export const generateExcelReport = async (dataToFill: any, filePath: string) => {
   try {
-    const workbook: Workbook = new ExcelJS.Workbook();
-
-    await workbook.xlsx.readFile(templatePath);
-    const pathToReport = await writeDataToExcel(dataToFill, templatePath, reportPath);
+    const pathToReport = await writeDataToExcel(dataToFill, filePath);
 
     return pathToReport;
   } catch (e) {
