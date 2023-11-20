@@ -3,12 +3,9 @@ import {writeFile} from 'fs/promises';
 import Workbook from "exceljs/index";
 // @ts-ignore
 import excel from 'exceljs';
-// @ts-ignore
-import copyExcelChart from './copy-excel-chart/copy-excel-chart'
-
-const readCharts = copyExcelChart.readCharts
-const copyChart = copyExcelChart.copyChart
-const writeCharts = copyExcelChart.writeCharts
+import {copyChart} from './copy-excel-chart/build/copyChart'
+import {readCharts} from './copy-excel-chart/build/readCharts'
+import {writeCharts} from './copy-excel-chart/build/writeChart'
 import {
     getSimpleVariable,
     getComplexVariable,

@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="9" uniqueCount="9"><si><t>Recommendation Trends</t></si><si><t>{widget(key: "sandbox_bujhtnn48v6rigi03lsg" dashboard: "NEW" widget: "Recommendation Trends" security: "US-TSLA"  ) {security, data}}</t></si><si><t>Period</t></si><si><t>Actual</t></si><si><t>Estimate</t></si><si><t>2022-06-30</t></si><si><t>2022-03-31</t></si><si><t>2021-12-31</t></si><si><t>2021-09-30</t></si></sst>
