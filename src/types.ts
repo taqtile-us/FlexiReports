@@ -15,6 +15,7 @@ export interface IFormula {
 export interface IFormulas {
   rowFormulas: IFormula[];
   columnFormulas: IFormula[];
+  masterFormulas: IFormula[]
 }
 
 interface IAlignment {
