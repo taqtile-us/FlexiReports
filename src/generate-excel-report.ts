@@ -1,5 +1,3 @@
-import ExcelJS from 'exceljs';
-import { Workbook } from 'exceljs/index.d';
 import { writeDataToExcel } from './Templater';
 
 export const generateExcelReport = async (dataToFill: any, filePath: string) => {
