@@ -105,11 +105,11 @@ const parseIntFromString = (string: string) => {
 
 const parseAllIntsFromString = (string: string) => {
 
-const rowMatches = string.match(/[A-Z](\d+)/g);
-if (!rowMatches) return [];
-const rowNumbers = rowMatches.map((match: any) => parseInt(match.match(/\d+/)[0]));
+    const rowMatches = string.match(/[A-Z](\d+)/g);
+    if (!rowMatches) return [];
+    const rowNumbers = rowMatches.map((match: any) => parseInt(match.match(/\d+/)[0]));
 
-return rowNumbers
+    return rowNumbers
 }
 
 const parseLetterFromString = (string: string) => {
@@ -124,25 +124,44 @@ const isItRowFormula = (string: string) => {
 }
 
 function replaceSpecificNumberInFormula(formula: string, targetNumber: number, newNumber: number) {
-  let notFinished = true;
-  let result = formula;
-  while(notFinished) {
-      const temp = result;
-      result = result.replace(targetNumber.toString(), newNumber.toString());
+    let notFinished = true;
+    let result = formula;
+    while (notFinished) {
+        const temp = result;
+        result = result.replace(targetNumber.toString(), newNumber.toString());
         if (result == temp) {
             notFinished = false;
         }
-  }
-  return result
+    }
+    return result
 }
 
 function addDifferenceToTheLastNumber(formula: string, difference: number) {
-  let theLastNumber: number | string = formula.split(':')[1].split(')')[0];
-  theLastNumber = parseIntFromString(theLastNumber);
-  const theNewNumber: number = theLastNumber + difference;
-  return replaceSpecificNumberInFormula(formula, theLastNumber, theNewNumber)
+    let theLastNumber: number | string = formula.split(':')[1].split(')')[0];
+    theLastNumber = parseIntFromString(theLastNumber);
+    const theNewNumber: number = theLastNumber + difference;
+    return replaceSpecificNumberInFormula(formula, theLastNumber, theNewNumber)
+}
+
+function extendRange(originalRange: string, extendNumber: number) {
+    const [sheetName, range] = originalRange.split('!');
+    // @ts-ignore
+    const [startRow, endRow] = range.match(/\d+/g);
+    const newEndRow: number = +endRow + extendNumber;
+    const newRange = originalRange.replace(endRow, newEndRow.toString())
+
+    return newRange;
 }
 
 
-
-export {getSimpleVariable, getComplexVariable, getFormula, parseIntFromString, parseLetterFromString, isItRowFormula, replaceSpecificNumberInFormula, addDifferenceToTheLastNumber}
+export {
+    getSimpleVariable,
+    getComplexVariable,
+    getFormula,
+    parseIntFromString,
+    parseLetterFromString,
+    isItRowFormula,
+    replaceSpecificNumberInFormula,
+    addDifferenceToTheLastNumber,
+    extendRange
+}
