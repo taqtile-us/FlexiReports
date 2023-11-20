@@ -1,25 +1,23 @@
 {
-  "name": "sheet",
+  "name": "flexiReports",
   "version": "1.0.0",
-  "description": "",
-  "main": "./lib/index.js",
-  "exports": {
-    "import": "./lib/index.js"
-  },
+  "description": "Flexi reports",
+  "main": "lib/index.js",
+  "types": "src/index.d.ts",
   "scripts": {
     "build": "tsc"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ZhuchkouAA/sheet.git"
+    "url": "https://github.com/taqtile-us/FlexiReports.git"
   },
-  "typings": "./src/index.d.ts",
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ZhuchkouAA/sheet/issues"
-  },
-  "homepage": "https://github.com/ZhuchkouAA/sheet#readme",
+  "keywords": [
+    "sheet js",
+    "master-detail",
+    "templater"
+  ],
+  "author": "Artsiom Zhuchkou",
+  "license": "MIT",
   "devDependencies": {
     "@types/exceljs": "^1.3.0",
     "@typescript-eslint/eslint-plugin": "^6.2.1",
@@ -32,7 +30,6 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "exceljs": "^4.3.0",
-    "xlsx-template-ex": "^0.2.9"
+    "exceljs": "^4.3.0"
   }
 }
