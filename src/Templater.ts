@@ -41,24 +41,27 @@ const copyDiagramm = async (template: string, report: string, length: number) =>
     const source = await readCharts(template, './temp')
     const output = await readCharts(report, './temp')
     const summary = source.summary();
-    let replaceCellRefs = summary['template']['chart1'].reduce((acc: any, el: any) => {
-        return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
-    }, {})
+    if (summary['template']['chart1']) {
+        let replaceCellRefs = summary['template']['chart1'].reduce((acc: any, el: any) => {
+            return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
+        }, {})
 
 
-    for (let key in replaceCellRefs) {
-        replaceCellRefs[key] = extendRange(replaceCellRefs[key], length)
+        for (let key in replaceCellRefs) {
+            replaceCellRefs[key] = extendRange(replaceCellRefs[key], length)
+        }
+        copyChart(
+            source,
+            output,
+            'template',
+            'chart1',
+            'template',
+            replaceCellRefs,
+        )
+
+        writeCharts(output, report)
     }
-    copyChart(
-        source,
-        output,
-        'template',
-        'chart1',
-        'template',
-        replaceCellRefs,
-    )
 
-    writeCharts(output, report)
 }
 
 async function parse(worksheet: Workbook.Worksheet) {
@@ -82,8 +85,14 @@ async function parse(worksheet: Workbook.Worksheet) {
                 }
                 const complexVariable: IDetail | null = getComplexVariable(cell);
                 if (complexVariable) {
-                    if (complexVariable.type === 'master') {
+                    if (masterRowNumber === rowNumber && !master.addedToDetails) {
+                        createArrayIfNotExist(details, master.entityName);
+                        details[master.entityName].push(master);
+                        master.addedToDetails = true;
+                    }
+                    if (complexVariable.type === 'master' && masterRowNumber === -1) {
                         master = complexVariable
+
                         masterRowNumber = rowNumber
                     }
 
@@ -115,6 +124,10 @@ async function parse(worksheet: Workbook.Worksheet) {
                 }
             });
         });
+
+        if (Object.keys(details).length === 0) {
+
+        }
         return {simpleVariables, master, details, formulas, staticVariables}
     } catch (err) {
         console.error('Error parse the file:', err);
@@ -136,81 +149,116 @@ async function putMasterDetail(worksheet: Workbook.Worksheet, master: IMaster, d
         const column: string | null = parseLetterFromString(master.address);
         const detailsKeys = Object.keys(details);
         if (!column || !currentRowNumber) return null;
+        if (Object.keys(details).length === 0) {
+
+        }
+
         data[master.entityName].forEach((masterEntity: any) => {
-            // put master row
-            const cell = worksheet.getCell(column + currentRowNumber);
-            cell.value = masterEntity[master.fieldName];
-            cell.font = cellFont;
-            cell.alignment = master.alignment;
+            if (!master.addedToDetails) {
+                putMasterRow(worksheet, masterEntity, master, column, currentRowNumber);
+                putMasterFormulas(worksheet, formulas, masterEntity, detailsKeys, currentRowNumber);
 
-            // put master formula
-            if (formulas.masterFormulas.length) {
-                const masterFormulaColumn: string | null = parseLetterFromString(formulas.masterFormulas[0].address);
-                if (masterFormulaColumn) {
-                    formulas.masterFormulas.forEach((masterFormula) => {
-                        const cell = worksheet.getCell(masterFormulaColumn + currentRowNumber);
-                        cell.value = {formula: `SUM(G${currentRowNumber + 1}:G${currentRowNumber + masterEntity[detailsKeys[0]].length})`};
-                        cell.font = cellFont;
-                        cell.alignment = masterFormula.alignment;
-                    })
-                }
+                currentRowNumber += 1;
+                worksheet.spliceRows(currentRowNumber + masterDetailDeep, 0, []);
+                masterEntity[detailsKeys[0]].forEach((detailEntity: any) => {
+                    putDetailRow(worksheet, details, detailsKeys, detailEntity, currentRowNumber)
 
-            }
+                    putDetailFormula(worksheet, formulas, currentRowNumber, startRowNumber, masterDetailDeep)
 
+                    putStaticVariables(worksheet, staticVariables, currentRowNumber, startRowNumber)
 
-            currentRowNumber += 1;
-            worksheet.spliceRows(currentRowNumber + masterDetailDeep, 0, []);
-            // put details row
-            masterEntity[detailsKeys[0]].forEach((detailEntity: any) => {
-                details[detailsKeys[0]].forEach((detailCoords) => {
-                    if (detailEntity[detailCoords.fieldName]) {
-                        const detailColumn: string | null = parseLetterFromString(detailCoords.address);
-                        if (!detailColumn) return
-                        const detailCell = worksheet.getCell(detailColumn + currentRowNumber);
-                        detailCell.value = detailEntity[detailCoords.fieldName];
-                        detailCell.font = cellFont;
-                        detailCell.alignment = detailCoords.alignment;
-                    }
+                    currentRowNumber += 1
+                    worksheet.spliceRows(currentRowNumber + masterDetailDeep, 0, []);
                 })
+            } else {
+                putDetailRow(worksheet, details, detailsKeys, masterEntity, currentRowNumber)
 
-                // put row formulas
-                formulas.rowFormulas.forEach((formula) => {
-                    const originalRowNumber = parseIntFromString(formula.formula);
-                    const newRowNumber = originalRowNumber + currentRowNumber - startRowNumber - masterDetailDeep;
-                    const movedFormula = replaceSpecificNumberInFormula(formula.formula, originalRowNumber, newRowNumber);
-                    const movedAddress = replaceSpecificNumberInFormula(formula.address, originalRowNumber, newRowNumber);
-                    const formulaCell = worksheet.getCell(movedAddress);
-                    formulaCell.value = {formula: movedFormula};
-                    formulaCell.alignment = formula.alignment;
-                })
+                putDetailFormula(worksheet, formulas, currentRowNumber, startRowNumber, masterDetailDeep)
 
-                // put static variables
-                for (let variableAddress in staticVariables) {
-                    if (parseIntFromString(variableAddress) === startRowNumber + 1) {
-                        const staticVariableColumn: string | null = parseLetterFromString(variableAddress);
-                        const staticVariableCell = worksheet.getCell(`${staticVariableColumn}${currentRowNumber}`);
-                        staticVariableCell.value = staticVariables[variableAddress].value;
-                        staticVariableCell.alignment = staticVariables[variableAddress].alignment;
-                    }
-                }
+                putStaticVariables(worksheet, staticVariables, currentRowNumber, startRowNumber)
 
                 currentRowNumber += 1
                 worksheet.spliceRows(currentRowNumber + masterDetailDeep, 0, []);
-            })
+            }
+
+
         })
 
         // put column formulas
         const difference = currentRowNumber - startRowNumber;
-        formulas.columnFormulas.forEach((formula) => {
-            const originalRowNumber = parseIntFromString(formula.address);
-            const formulaCell = worksheet.getCell(replaceSpecificNumberInFormula(formula.address, originalRowNumber, originalRowNumber + difference));
-            formulaCell.value = {formula: addDifferenceToTheLastNumber(formula.formula, difference)};
-            formulaCell.alignment = formula.alignment;
-        })
+        putColumnFormulas(worksheet, formulas, difference)
         return currentRowNumber - startRowNumber;
     } catch (err) {
         console.error('Error put master detail to the file:', err);
         return null;
+    }
+}
+
+function putMasterRow(worksheet, masterEntity, master, column, currentRowNumber) {
+    const cell = worksheet.getCell(column + currentRowNumber);
+    cell.value = masterEntity[master.fieldName];
+    cell.font = cellFont;
+    cell.alignment = master.alignment;
+}
+
+function putMasterFormulas(worksheet, formulas, masterEntity, detailsKeys, currentRowNumber) {
+    if (formulas.masterFormulas.length) {
+        const masterFormulaColumn: string | null = parseLetterFromString(formulas.masterFormulas[0].address);
+        if (masterFormulaColumn) {
+            formulas.masterFormulas.forEach((masterFormula) => {
+                const cell = worksheet.getCell(masterFormulaColumn + currentRowNumber);
+                cell.value = {formula: `SUM(G${currentRowNumber + 1}:G${currentRowNumber + masterEntity[detailsKeys[0]].length})`};
+                cell.font = cellFont;
+                cell.alignment = masterFormula.alignment;
+            })
+        }
+
+    }
+}
+
+
+function putDetailRow(worksheet, details, detailsKeys, detailEntity, currentRowNumber) {
+    details[detailsKeys[0]].forEach((detailCoords) => {
+        if (detailEntity[detailCoords.fieldName]) {
+            const detailColumn: string | null = parseLetterFromString(detailCoords.address);
+            if (!detailColumn) return
+            const detailCell = worksheet.getCell(detailColumn + currentRowNumber);
+            detailCell.value = detailEntity[detailCoords.fieldName];
+            detailCell.font = cellFont;
+            detailCell.alignment = detailCoords.alignment;
+        }
+    })
+}
+
+function putDetailFormula(worksheet, formulas, currentRowNumber, startRowNumber, masterDetailDeep) {
+    formulas.rowFormulas.forEach((formula) => {
+        const originalRowNumber = parseIntFromString(formula.formula);
+        const newRowNumber = originalRowNumber + currentRowNumber - startRowNumber - masterDetailDeep;
+        const movedFormula = replaceSpecificNumberInFormula(formula.formula, originalRowNumber, newRowNumber);
+        const movedAddress = replaceSpecificNumberInFormula(formula.address, originalRowNumber, newRowNumber);
+        const formulaCell = worksheet.getCell(movedAddress);
+        formulaCell.value = {formula: movedFormula};
+        formulaCell.alignment = formula.alignment;
+    })
+}
+
+function putColumnFormulas(worksheet, formulas, difference) {
+    formulas.columnFormulas.forEach((formula) => {
+        const originalRowNumber = parseIntFromString(formula.address);
+        const formulaCell = worksheet.getCell(replaceSpecificNumberInFormula(formula.address, originalRowNumber, originalRowNumber + difference));
+        formulaCell.value = {formula: addDifferenceToTheLastNumber(formula.formula, difference)};
+        formulaCell.alignment = formula.alignment;
+    })
+}
+
+function putStaticVariables(worksheet, staticVariables, currentRowNumber, startRowNumber) {
+    for (let variableAddress in staticVariables) {
+        if (parseIntFromString(variableAddress) === startRowNumber + 1) {
+            const staticVariableColumn: string | null = parseLetterFromString(variableAddress);
+            const staticVariableCell = worksheet.getCell(`${staticVariableColumn}${currentRowNumber}`);
+            staticVariableCell.value = staticVariables[variableAddress].value;
+            staticVariableCell.alignment = staticVariables[variableAddress].alignment;
+        }
     }
 }
 

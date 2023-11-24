@@ -1,4 +1,5 @@
 export interface IMaster {
+  addedToDetails: Boolean;
   entityName: string,
   fieldName: string,
   address: string,
