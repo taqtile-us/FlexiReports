@@ -1,5 +1,5 @@
 {
-  "name": "xlsxtemplater",
+  "name": "xlsx-constructor",
   "version": "1.0.0",
   "description": "Flexi reports",
   "main": "lib/index.js",
