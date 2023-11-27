@@ -254,9 +254,6 @@ tempFolder) {
     const filePath = sourceFile.replace(/\\/, 'g');
     const fileName = filePath.slice(filePath.lastIndexOf('/') + 1, filePath.length).replace('.xlsx', '/');
     const sourceFolder = `${tempFolder}/${fileName}`;
-    if (fs.existsSync(sourceFolder))
-        fs.rmdirSync(sourceFolder, { recursive: true }); //remove old files that have been parced at the same location.
-    fs.mkdirSync(sourceFolder);
     return new Promise((resolve, reject) => {
         try { //under the hood, excel files are zip folders containing xml files.
             const zip = new AdmZip(sourceFile);
