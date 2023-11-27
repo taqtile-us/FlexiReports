@@ -1,10 +1,10 @@
 import { writeDataToExcel } from './Templater';
 
-export const generateExcelReport = async (dataToFill: any, filePath: string) => {
+export const generateExcelReport = async (dataToFill: any, filePath: string, reportPath: string, temporaryFolderPath: string) => {
   try {
-    const pathToReport = await writeDataToExcel(dataToFill, filePath);
+    await writeDataToExcel(dataToFill, filePath, reportPath, temporaryFolderPath);
 
-    return pathToReport;
+    return reportPath;
   } catch (e) {
     console.log(e, 'generateExcelReport error');
     return false;
