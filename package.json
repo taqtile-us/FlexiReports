@@ -1,5 +1,5 @@
 {
-  "name": "flexiReports",
+  "name": "xlsxtemplater",
   "version": "1.0.0",
   "description": "Flexi reports",
   "main": "lib/index.js",
