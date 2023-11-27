@@ -37,9 +37,9 @@ const createArrayIfNotExist = (list: any, entity: string) => {
     }
 }
 
-const copyDiagramm = async (template: string, report: string, length: number) => {
-    const source = await readCharts(template, './temp')
-    const output = await readCharts(report, './temp')
+const copyDiagramm = async (template: string, report: string, length: number, temporaryFolderPath: string) => {
+    const source = await readCharts(template, temporaryFolderPath)
+    const output = await readCharts(report, temporaryFolderPath)
     const summary = source.summary();
     if (summary['template']['chart1']) {
         let replaceCellRefs = summary['template']['chart1'].reduce((acc: any, el: any) => {
@@ -144,14 +144,12 @@ async function parse(worksheet: Workbook.Worksheet) {
 async function putMasterDetail(worksheet: Workbook.Worksheet, master: IMaster, details: IDetails, data: any, formulas: IFormulas, staticVariables: IStaticVariables) {
     try {
         const masterDetailDeep = 1;
+        const detailsDeep = 0;
         let currentRowNumber: number = parseIntFromString(master.address);
         const startRowNumber: number = currentRowNumber;
         const column: string | null = parseLetterFromString(master.address);
         const detailsKeys = Object.keys(details);
         if (!column || !currentRowNumber) return null;
-        if (Object.keys(details).length === 0) {
-
-        }
 
         data[master.entityName].forEach((masterEntity: any) => {
             if (!master.addedToDetails) {
@@ -173,9 +171,9 @@ async function putMasterDetail(worksheet: Workbook.Worksheet, master: IMaster, d
             } else {
                 putDetailRow(worksheet, details, detailsKeys, masterEntity, currentRowNumber)
 
-                putDetailFormula(worksheet, formulas, currentRowNumber, startRowNumber, masterDetailDeep)
+                putDetailFormula(worksheet, {rowFormulas: formulas.masterFormulas}, currentRowNumber, startRowNumber, detailsDeep)
 
-                putStaticVariables(worksheet, staticVariables, currentRowNumber, startRowNumber)
+                putStaticVariables(worksheet, staticVariables, currentRowNumber, startRowNumber - 1 )
 
                 currentRowNumber += 1
                 worksheet.spliceRows(currentRowNumber + masterDetailDeep, 0, []);
@@ -279,7 +277,7 @@ async function putSimpleVariables(worksheet: Workbook.Worksheet, data: any, simp
     }
 }
 
-const buildTemplate = async (dataToFill: {}, path: string) => {
+const buildTemplate = async (dataToFill: {}, path: string, reportPath: string, temporaryFolderPath: string) => {
     const {workbook, workSheet}: any = await readFile(path);
     const {master, details, simpleVariables, formulas, staticVariables} = await parse(workSheet);
 
@@ -291,16 +289,19 @@ const buildTemplate = async (dataToFill: {}, path: string) => {
     // put master-details
     const lenght: number | null = await putMasterDetail(workSheet, masterTyped, detailsTyped, dataToFill, formulas, staticVariables);
     if (lenght) {
-        await workbook.xlsx.writeFile('report.xlsx');
-        copyDiagramm(path, './report.xlsx', lenght)
+        await workbook.xlsx.writeFile(reportPath);
+        copyDiagramm(path, reportPath, lenght, temporaryFolderPath)
     }
 
 
 }
-export const writeDataToExcel = async (dataToFill: any, templatePath: string) => {
-    const filePath = './report.xlsx';
-    const buffer: any = await buildTemplate(dataToFill, path.join(templatePath));
+export const writeDataToExcel = async (dataToFill: any, templatePath: string, reportPath: string, temporaryFolderPath: string) => {
+    try {
+    await buildTemplate(dataToFill, path.join(templatePath), reportPath, temporaryFolderPath)
+    } catch(e) {
+        console.log(e, 'write data to excel error')
+    }
     // await writeFile(filePath, buffer, 'binary');
 
-    return filePath;
+    return true;
 };
