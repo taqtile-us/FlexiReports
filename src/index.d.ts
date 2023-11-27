@@ -1,1 +1,1 @@
-export default type generate = () => {}
+export default function generate(data: any, templatePath: string, reportPath: string, tempFolderPath: string): void {}
