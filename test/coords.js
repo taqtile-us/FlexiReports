@@ -1,1 +1,0 @@
-const coords = { A17: { address: 'A17', value: 'SUM(A6:A7)', numberAddress: 17 } }
