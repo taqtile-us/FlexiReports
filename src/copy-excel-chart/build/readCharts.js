@@ -9,7 +9,36 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import fs from 'fs';
 import xml2js from 'xml2js';
-import AdmZip from 'adm-zip';
+const NodeStreamZip = require('node-stream-zip');
+const fsPromised = require('fs').promises;
+const path = require('path')
+
+async function extractZip(zipFilePath, outputDir) {
+    const zip = new NodeStreamZip.async({ file: zipFilePath });
+    const nameWithoutExtension = path.parse(zipFilePath).name;
+    const outputDirPath = path.join(outputDir, nameWithoutExtension);
+    try {
+        const res = await zip.entries();
+
+        for (const entry of Object.values(res)) {
+            const { name, isDirectory } = entry;
+            console.log(isDirectory)
+            if (!isDirectory) {
+                const content = await zip.entryData(name);
+                const outputPath = path.join(outputDirPath, name);
+                const dirName = path.dirname(outputPath);
+                console.log(dirName, 'dirName')
+                await fsPromised.mkdir(dirName, { recursive: true });
+                await fsPromised.writeFile(outputPath, content);
+            }
+        }
+    } catch (err) {
+        console.error('Error extracting ZIP:', err);
+    } finally {
+        await zip.close();
+    }
+}
+
 function buildChartList(chartList) {
     let allCharts = [];
     Object.values(chartList).forEach((el) => {
@@ -254,10 +283,9 @@ tempFolder) {
     const filePath = sourceFile.replace(/\\/, 'g');
     const fileName = filePath.slice(filePath.lastIndexOf('/') + 1, filePath.length).replace('.xlsx', '/');
     const sourceFolder = `${tempFolder}/${fileName}`;
-    return new Promise((resolve, reject) => {
-        try { //under the hood, excel files are zip folders containing xml files.
-            const zip = new AdmZip(sourceFile);
-            zip.extractAllTo(sourceFolder, true); //unzip excel template file to dump folder so that we can access xml files.
+    return new Promise(async (resolve, reject) => {
+        try {
+            await extractZip(sourceFile, tempFolder);
             const [worksheetNames, definedNames] = readSheetNames(sourceFolder); //returns  {[alias]: worksheet.xml name}
             const drawingList = findDrawingRels(worksheetNames, sourceFolder); //returns {[alias]: drawings}
             const [chartList, drawingrIds] = Object.keys(drawingList).length > 0 ? parseDrawingRels(drawingList, sourceFolder) : [{}, {}]; //find associated charts and xml blob associated with drawing in drawing.xml
