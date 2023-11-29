@@ -22,12 +22,10 @@ async function extractZip(zipFilePath, outputDir) {
 
         for (const entry of Object.values(res)) {
             const { name, isDirectory } = entry;
-            console.log(isDirectory)
             if (!isDirectory) {
                 const content = await zip.entryData(name);
                 const outputPath = path.join(outputDirPath, name);
                 const dirName = path.dirname(outputPath);
-                console.log(dirName, 'dirName')
                 await fsPromised.mkdir(dirName, { recursive: true });
                 await fsPromised.writeFile(outputPath, content);
             }

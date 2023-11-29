@@ -1,17 +1,35 @@
-import AdmZip from 'adm-zip';
-export function writeCharts(targetExcel, printPath) {
-    return new Promise((resolve, reject) => {
-        try {
-            const targetDir = targetExcel.tempDir;
-            const zip = new AdmZip();
-            zip.addLocalFolder(targetDir, '');
-            zip.writeZip(printPath);
-            resolve(true);
-        }
-        catch (error) {
-            console.log('Write chart file error. targetExcel: ', targetExcel, 'Error: ', error);
-            reject(error);
-        }
+const fs = require('fs');
+const archiver = require('archiver');
+export function writeCharts(targetExcel, zipFilePath) {
+    const sourceFolder = targetExcel.tempDir;
+  return new Promise((resolve, reject) => {
+    const output = fs.createWriteStream(zipFilePath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Set compression level
     });
+
+    output.on('close', function () {
+      resolve(zipFilePath);
+    });
+
+    archive.on('warning', function (err) {
+      if (err.code === 'ENOENT') {
+        console.warn(err);
+      } else {
+        reject(err);
+      }
+    });
+
+    archive.on('error', function (err) {
+      reject(err);
+    });
+
+    archive.pipe(output);
+
+    archive.directory(sourceFolder, false);
+
+    archive.finalize();
+  });
 }
+
 //# sourceMappingURL=writeChart.js.map
