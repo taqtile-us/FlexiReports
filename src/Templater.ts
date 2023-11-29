@@ -50,7 +50,7 @@ const copyDiagramm = async (template: string, report: string, length: number, te
         for (let key in replaceCellRefs) {
             replaceCellRefs[key] = extendRange(replaceCellRefs[key], length)
         }
-        copyChart(
+        await copyChart(
             source,
             output,
             'template',
@@ -59,7 +59,7 @@ const copyDiagramm = async (template: string, report: string, length: number, te
             replaceCellRefs,
         )
 
-        writeCharts(output, report)
+        await writeCharts(output, report)
     }
 
 }
