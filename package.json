@@ -31,7 +31,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "adm-zip": "^0.5.10",
+    "archiver": "^6.0.1",
     "exceljs": "^4.3.0",
     "node-stream-zip": "^1.15.0",
     "xml2js": "^0.6.2"
