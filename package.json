@@ -1,6 +1,6 @@
 {
   "name": "xlsx-constructor",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Flexi reports",
   "main": "lib/index.js",
   "types": "src/index.d.ts",
@@ -33,6 +33,7 @@
   "dependencies": {
     "adm-zip": "^0.5.10",
     "exceljs": "^4.3.0",
+    "node-stream-zip": "^1.15.0",
     "xml2js": "^0.6.2"
   }
 }
