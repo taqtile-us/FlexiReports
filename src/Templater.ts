@@ -290,7 +290,7 @@ const buildTemplate = async (dataToFill: {}, path: string, reportPath: string, t
     const lenght: number | null = await putMasterDetail(workSheet, masterTyped, detailsTyped, dataToFill, formulas, staticVariables);
     if (lenght) {
         await workbook.xlsx.writeFile(reportPath);
-        copyDiagramm(path, reportPath, lenght, temporaryFolderPath)
+        await copyDiagramm(path, reportPath, lenght, temporaryFolderPath)
     }
 
 
