@@ -275,13 +275,12 @@ function putStaticVariables(worksheet, staticVariables, currentRowNumber, startR
 async function putSimpleVariables(worksheet: Workbook.Worksheet, data: any, simpleVariables: ISimpleVariables) {
     try {
         for (let variable in simpleVariables) {
-            if (data[variable.toLowerCase()]) {
-                simpleVariables[variable].forEach((simpleVariable) => {
+            simpleVariables[variable].forEach((simpleVariable) => {
+                    const valueToPut =  data[variable.toLowerCase()] ? data[variable.toLowerCase()] : '';
                     const variableCell = worksheet.getCell(simpleVariable.address);
-                    variableCell.value = data[variable.toLowerCase()];
+                    variableCell.value = valueToPut;
                     variableCell.alignment = simpleVariable.alignment;
                 })
-            }
         }
     } catch (err) {
         console.error('Error put simple variables to the file:', err);
