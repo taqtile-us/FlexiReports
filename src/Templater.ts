@@ -248,6 +248,7 @@ function putDetailFormula(worksheet, formulas, currentRowNumber, startRowNumber,
         const movedAddress = replaceSpecificNumberInFormula(formula.address, originalRowNumber, newRowNumber);
         const formulaCell = worksheet.getCell(movedAddress);
         formulaCell.value = {formula: movedFormula};
+        formulaCell.font = cellFont;
         formulaCell.alignment = formula.alignment;
     })
 }
@@ -267,6 +268,7 @@ function putStaticVariables(worksheet, staticVariables, currentRowNumber, startR
             const staticVariableColumn: string | null = parseLetterFromString(variableAddress);
             const staticVariableCell = worksheet.getCell(`${staticVariableColumn}${currentRowNumber}`);
             staticVariableCell.value = staticVariables[variableAddress].value;
+            staticVariableCell.font = cellFont;
             staticVariableCell.alignment = staticVariables[variableAddress].alignment;
         }
     }
