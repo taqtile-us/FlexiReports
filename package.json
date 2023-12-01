@@ -1,6 +1,6 @@
 {
   "name": "xlsx-constructor",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Flexi reports",
   "main": "lib/index.js",
   "types": "src/index.d.ts",
@@ -14,7 +14,9 @@
   "keywords": [
     "sheet js",
     "master-detail",
-    "templater"
+    "templater",
+    "diagrams",
+    "xlsx"
   ],
   "author": "Artsiom Zhuchkou",
   "license": "MIT",

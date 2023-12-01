@@ -38,6 +38,14 @@ const createArrayIfNotExist = (list: any, entity: string) => {
 }
 
 const copyDiagramm = async (template: string, report: string, length: number, temporaryFolderPath: string) => {
+    try {
+    await fs.mkdir(temporaryFolderPath, { recursive: true });
+    console.log(`Folder created (or already exists): ${temporaryFolderPath}`);
+    } catch (error: any) {
+    console.error(`Error creating folder: ${error.message}`);
+    }
+
+    try {
     const source = await readCharts(template, temporaryFolderPath)
     const output = await readCharts(report, temporaryFolderPath)
     const summary = source.summary();
@@ -61,6 +69,10 @@ const copyDiagramm = async (template: string, report: string, length: number, te
 
         await writeCharts(output, report)
     }
+    } catch (error: any) {
+        console.error(`Error copy diagramm: ${error.message}`);
+    }
+
 
 }
 
@@ -151,7 +163,7 @@ async function putMasterDetail(worksheet: Workbook.Worksheet, master: IMaster, d
         const detailsKeys = Object.keys(details);
         if (!column || !currentRowNumber) return null;
 
-        data[master.entityName].forEach((masterEntity: any) => {
+        data[master.entityName.toLowerCase()].forEach((masterEntity: any) => {
             if (!master.addedToDetails) {
                 putMasterRow(worksheet, masterEntity, master, column, currentRowNumber);
                 putMasterFormulas(worksheet, formulas, masterEntity, detailsKeys, currentRowNumber);
@@ -295,9 +307,23 @@ const buildTemplate = async (dataToFill: {}, path: string, reportPath: string, t
 
 
 }
+
+function convertObjectToLowercase(obj) {
+  const convertedObject = {};
+
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const value = obj[key];
+      convertedObject[key.toLowerCase()] = value;
+    }
+  }
+
+  return convertedObject;
+}
+
 export const writeDataToExcel = async (dataToFill: any, templatePath: string, reportPath: string, temporaryFolderPath: string) => {
     try {
-    await buildTemplate(dataToFill, path.join(templatePath), reportPath, temporaryFolderPath)
+    await buildTemplate(convertObjectToLowercase(dataToFill), path.join(templatePath), reportPath, temporaryFolderPath)
     } catch(e) {
         console.log(e, 'write data to excel error')
     }

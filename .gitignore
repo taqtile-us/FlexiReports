@@ -1,2 +1,7 @@
 .idea/
 node_modules/
+test/node_modules/
+test/temporary/
+test/report.xlsx
+test/package-lock.json
+package-lock.json
