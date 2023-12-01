@@ -275,7 +275,7 @@ function putStaticVariables(worksheet, staticVariables, currentRowNumber, startR
 async function putSimpleVariables(worksheet: Workbook.Worksheet, data: any, simpleVariables: ISimpleVariables) {
     try {
         for (let variable in simpleVariables) {
-            if (data[variable]) {
+            if (data[variable.toLowerCase()]) {
                 simpleVariables[variable].forEach((simpleVariable) => {
                     const variableCell = worksheet.getCell(simpleVariable.address);
                     variableCell.value = data[variable];
