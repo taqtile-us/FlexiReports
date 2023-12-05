@@ -48,7 +48,9 @@ const copyDiagramm = async (template: string, report: string, length: number, te
     try {
     const source = await readCharts(template, temporaryFolderPath)
     const output = await readCharts(report, temporaryFolderPath)
-    const summary = source.summary();
+    source.worksheets.template.drawingRels.chart1 = 'rid3';
+        const summary = source.summary();
+
     if (summary['template']['chart1']) {
         let replaceCellRefs = summary['template']['chart1'].reduce((acc: any, el: any) => {
             return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
@@ -325,6 +327,7 @@ function convertObjectToLowercase(obj) {
 export const writeDataToExcel = async (dataToFill: any, templatePath: string, reportPath: string, temporaryFolderPath: string) => {
     try {
     await buildTemplate(convertObjectToLowercase(dataToFill), path.join(templatePath), reportPath, temporaryFolderPath)
+        // await writeCharts('temporary/report_ready', 'report.xlsx')
     } catch(e) {
         console.log(e, 'write data to excel error')
     }
