@@ -6,7 +6,7 @@
   "types": "src/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "publish": "npm i && npm run build && rm -rf node_modules && npm publish"
+    "pub": "npm i && npm run build && rm -rf node_modules && npm publish"
   },
   "repository": {
     "type": "git",
