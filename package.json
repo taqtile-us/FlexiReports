@@ -1,11 +1,12 @@
 {
   "name": "xlsx-constructor",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Flexi reports",
   "main": "lib/index.js",
   "types": "src/index.d.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "publish": "npm i && npm run build && rm -rf node_modules && npm publish"
   },
   "repository": {
     "type": "git",
@@ -35,6 +36,7 @@
   "dependencies": {
     "archiver": "^6.0.1",
     "exceljs": "^4.3.0",
+    "image-size": "^1.0.2",
     "node-stream-zip": "^1.15.0",
     "xml2js": "^0.6.2"
   }

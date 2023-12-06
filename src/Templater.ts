@@ -1,10 +1,8 @@
 import path from 'path';
-import {writeFile} from 'fs/promises';
 import Workbook from "exceljs/index";
-// @ts-ignore
 import excel from 'exceljs';
 import {copyChart} from './copy-excel-chart/build/copyChart'
-import {readCharts} from './copy-excel-chart/build/readCharts'
+import {readCharts, extractZip} from './copy-excel-chart/build/readCharts'
 import {writeCharts} from './copy-excel-chart/build/writeChart'
 import {
     getSimpleVariable,
@@ -15,10 +13,12 @@ import {
     isItRowFormula, replaceSpecificNumberInFormula, addDifferenceToTheLastNumber, extendRange
 } from "./Parser";
 import {IDetail, IMaster, IDetails, IFormulas, IStaticVariables, ISimpleVariables} from "./types";
+import {ISizeCalculationResult} from "image-size/dist/types/interface";
 
 const cellFont = {name: 'Arial', size: 11};
 
 const fs = require('fs').promises;
+const sizeOf = require('image-size');
 
 async function readFile(path: string) {
     try {
@@ -39,38 +39,38 @@ const createArrayIfNotExist = (list: any, entity: string) => {
 
 const copyDiagramm = async (template: string, report: string, length: number, temporaryFolderPath: string) => {
     try {
-    await fs.mkdir(temporaryFolderPath, { recursive: true });
-    console.log(`Folder created (or already exists): ${temporaryFolderPath}`);
+        await fs.mkdir(temporaryFolderPath, {recursive: true});
+        console.log(`Folder created (or already exists): ${temporaryFolderPath}`);
     } catch (error: any) {
-    console.error(`Error creating folder: ${error.message}`);
+        console.error(`Error creating folder: ${error.message}`);
     }
 
     try {
-    const source = await readCharts(template, temporaryFolderPath)
-    const output = await readCharts(report, temporaryFolderPath)
-    source.worksheets.template.drawingRels.chart1 = 'rid3';
+        const source = await readCharts(template, temporaryFolderPath)
+        const output = await readCharts(report, temporaryFolderPath)
+        source.worksheets.template.drawingRels.chart1 = 'rid3';
         const summary = source.summary();
 
-    if (summary['template']['chart1']) {
-        let replaceCellRefs = summary['template']['chart1'].reduce((acc: any, el: any) => {
-            return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
-        }, {})
+        if (summary['template']['chart1']) {
+            let replaceCellRefs = summary['template']['chart1'].reduce((acc: any, el: any) => {
+                return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
+            }, {})
 
 
-        for (let key in replaceCellRefs) {
-            replaceCellRefs[key] = extendRange(replaceCellRefs[key], length)
+            for (let key in replaceCellRefs) {
+                replaceCellRefs[key] = extendRange(replaceCellRefs[key], length)
+            }
+            await copyChart(
+                source,
+                output,
+                'template',
+                'chart1',
+                'template',
+                replaceCellRefs,
+            )
+
+            await writeCharts(output, report)
         }
-        await copyChart(
-            source,
-            output,
-            'template',
-            'chart1',
-            'template',
-            replaceCellRefs,
-        )
-
-        await writeCharts(output, report)
-    }
     } catch (error: any) {
         console.error(`Error copy diagramm: ${error.message}`);
     }
@@ -88,6 +88,7 @@ async function parse(worksheet: Workbook.Worksheet) {
         let masterRowNumber: number = -1;
         worksheet?.eachRow((row: Workbook.Worksheet.row, rowNumber: number) => {
             row.eachCell((cell: Workbook.Worksheet.cell, colNumber: Workbook.Worksheet.colNumber) => {
+
                 const simpleVariable = getSimpleVariable(cell);
                 if (simpleVariable) {
                     createArrayIfNotExist(simpleVariables, simpleVariable.variable)
@@ -187,7 +188,7 @@ async function putMasterDetail(worksheet: Workbook.Worksheet, master: IMaster, d
 
                 putDetailFormula(worksheet, {rowFormulas: formulas.masterFormulas}, currentRowNumber, startRowNumber, detailsDeep)
 
-                putStaticVariables(worksheet, staticVariables, currentRowNumber, startRowNumber - 1 )
+                putStaticVariables(worksheet, staticVariables, currentRowNumber, startRowNumber - 1)
 
                 currentRowNumber += 1
                 worksheet.spliceRows(currentRowNumber + masterDetailDeep, 0, []);
@@ -196,7 +197,6 @@ async function putMasterDetail(worksheet: Workbook.Worksheet, master: IMaster, d
 
         })
 
-        // put column formulas
         const difference = currentRowNumber - startRowNumber;
         putColumnFormulas(worksheet, formulas, difference)
         return currentRowNumber - startRowNumber;
@@ -280,11 +280,11 @@ async function putSimpleVariables(worksheet: Workbook.Worksheet, data: any, simp
     try {
         for (let variable in simpleVariables) {
             simpleVariables[variable].forEach((simpleVariable) => {
-                    const valueToPut =  data[variable.toLowerCase()] ? data[variable.toLowerCase()] : '';
-                    const variableCell = worksheet.getCell(simpleVariable.address);
-                    variableCell.value = valueToPut;
-                    variableCell.alignment = simpleVariable.alignment;
-                })
+                const valueToPut = data[variable.toLowerCase()] ? data[variable.toLowerCase()] : '';
+                const variableCell = worksheet.getCell(simpleVariable.address);
+                variableCell.value = valueToPut;
+                variableCell.alignment = simpleVariable.alignment;
+            })
         }
     } catch (err) {
         console.error('Error put simple variables to the file:', err);
@@ -298,40 +298,79 @@ const buildTemplate = async (dataToFill: {}, path: string, reportPath: string, t
 
     const masterTyped: IMaster = master;
     const detailsTyped: IDetails = details;
-    // put simple variables
     putSimpleVariables(workSheet, dataToFill, simpleVariables)
 
     // put master-details
     const lenght: number | null = await putMasterDetail(workSheet, masterTyped, detailsTyped, dataToFill, formulas, staticVariables);
     if (lenght) {
         await workbook.xlsx.writeFile(reportPath);
+        await extractZip(reportPath, `${temporaryFolderPath}/forPictures`);
+        await fixPicturesSizes(reportPath, `${temporaryFolderPath}/forPictures`)
         await copyDiagramm(path, reportPath, lenght, temporaryFolderPath)
     }
+}
 
+const fixPicturesSizes = async (reportPath, temporaryFolderPath) => {
+    try {
+        const filePath = reportPath.replace(/\\/, 'g');
+        const fileName = filePath.slice(filePath.lastIndexOf('/') + 1, filePath.length).replace('.xlsx', '/');
+        const sourceFolder = `${temporaryFolderPath}/${fileName}xl/media/`;
+        let imagesSizes = await fs.readdir(sourceFolder);
+        imagesSizes = imagesSizes.map((name) => {
+            return `${sourceFolder}${name}`;
+        })
+        const result: any = await readFile(reportPath);
+        const images = result.workSheet.getImages();
+        imagesSizes = imagesSizes.map((path, index) => {
+            const size: ISizeCalculationResult = sizeOf(path);
+            const nativeRow = images[index].range.tl.nativeRow
+            const nativeCol = images[index].range.tl.nativeCol
+            return Object.assign(size, {path, nativeCol, nativeRow});
+        })
+
+        images.forEach((image) => {
+            image.range.tl.nativeColOff = 0
+            image.range.tl.nativeRowOff = 0
+            image.range.br.nativeRow = 0;
+            image.range.br.nativeCol = 0;
+        });
+        imagesSizes.forEach((image) => {
+            const imageId = result.workbook.addImage({
+                filename: image.path,
+                extension: image.type,
+            });
+            const {nativeCol, nativeRow, width, height} = image;
+            result.workSheet.addImage(imageId, {
+                tl: {nativeCol, nativeRow},
+                ext: {width, height}
+            });
+        })
+        await result.workbook.xlsx.writeFile(reportPath);
+    } catch (e) {
+        console.log(e, 'fixPicturesSizes error')
+    }
 
 }
 
 function convertObjectToLowercase(obj) {
-  const convertedObject = {};
+    const convertedObject = {};
 
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const value = obj[key];
-      convertedObject[key.toLowerCase()] = value;
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            convertedObject[key.toLowerCase()] = value;
+        }
     }
-  }
 
-  return convertedObject;
+    return convertedObject;
 }
 
 export const writeDataToExcel = async (dataToFill: any, templatePath: string, reportPath: string, temporaryFolderPath: string) => {
     try {
-    await buildTemplate(convertObjectToLowercase(dataToFill), path.join(templatePath), reportPath, temporaryFolderPath)
-        // await writeCharts('temporary/report_ready', 'report.xlsx')
-    } catch(e) {
+        await buildTemplate(convertObjectToLowercase(dataToFill), path.join(templatePath), reportPath, temporaryFolderPath)
+    } catch (e) {
         console.log(e, 'write data to excel error')
     }
-    // await writeFile(filePath, buffer, 'binary');
 
     return true;
 };

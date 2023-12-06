@@ -36,7 +36,7 @@ const NodeStreamZip = require('node-stream-zip');
 const fsPromised = require('fs').promises;
 const path = require('path')
 
-async function extractZip(zipFilePath, outputDir) {
+export async function extractZip(zipFilePath, outputDir) {
     const zip = new NodeStreamZip.async({file: zipFilePath});
     const nameWithoutExtension = path.parse(zipFilePath).name;
     const outputDirPath = path.join(outputDir, nameWithoutExtension);
