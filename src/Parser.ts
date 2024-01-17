@@ -124,16 +124,7 @@ const isItRowFormula = (string: string) => {
 }
 
 function replaceSpecificNumberInFormula(formula: string, targetNumber: number, newNumber: number) {
-    let notFinished = true;
-    let result = formula;
-    while (notFinished) {
-        const temp = result;
-        result = result.replace(targetNumber.toString(), newNumber.toString());
-        if (result == temp) {
-            notFinished = false;
-        }
-    }
-    return result
+    return formula.replace(`/${targetNumber}/g`, String(newNumber));
 }
 
 function addDifferenceToTheLastNumber(formula: string, difference: number) {
