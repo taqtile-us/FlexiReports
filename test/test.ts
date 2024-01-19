@@ -1,10 +1,10 @@
-import generate from '../src/index';
-const fs = require('fs').promises;
+import generate from 'xlsx-constructor';
+import { promises as fsPromises } from 'fs';
 const templatePath = 'templates/with-diagram.xlsx';
 const reportPath = 'report.xlsx';
 const temporaryFolder = 'temporary';
 const start = async () => {
-  const jsonData = await fs.readFile('assetClass.json', 'utf8');
+  const jsonData = await fsPromises.readFile('assetClass.json', 'utf8');
   const parsedData = JSON.parse(jsonData);
   generate(parsedData, templatePath, reportPath, temporaryFolder);
 };
