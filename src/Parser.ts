@@ -118,11 +118,8 @@ const isItRowFormula = (string: string) => {
   const numbers = parseAllIntsFromString(string);
   return numbers[0] == numbers[1];
 };
-const counter: any = [];
 function replaceSpecificNumberInFormula(formula: string, targetNumber: number, newNumber: number) {
   const result = formula.replace(new RegExp(String(targetNumber), 'g'), String(newNumber));
-  counter.push({ formula, targetNumber, newNumber, result });
-  console.log(counter);
   return result;
 }
 
