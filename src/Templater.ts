@@ -349,7 +349,7 @@ const buildTemplate = async (
   if (lenght) {
     await workbook.xlsx.writeFile(reportPath);
     await extractZip(reportPath, `${temporaryFolderPath}/forPictures`);
-    await fixPicturesSizes(reportPath, `${temporaryFolderPath}/forPictures`);
+    // await fixPicturesSizes(reportPath, `${temporaryFolderPath}/forPictures`);
     await copyDiagramm(path, reportPath, lenght, temporaryFolderPath);
   }
 };
