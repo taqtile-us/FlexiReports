@@ -316,6 +316,7 @@ async function putSimpleVariables(
         const variableCell = worksheet.getCell(simpleVariable.address);
         variableCell.value = valueToPut;
         variableCell.alignment = simpleVariable.alignment;
+        simpleVariable.insertedValue = valueToPut;
       });
     }
   } catch (err) {
@@ -336,7 +337,15 @@ const buildTemplate = async (
   const masterTyped: IMaster = master;
   const detailsTyped: IDetails = details;
   putSimpleVariables(workSheet, dataToFill, simpleVariables);
-
+  for (const name in simpleVariables) {
+    simpleVariables[name].forEach((variable) => {
+      if (!staticVariables[variable.address]) {
+        staticVariables[variable.address] = {
+          value: variable.insertedValue, address: variable.address, alignment: variable.alignment
+        }
+      }
+    })
+  }
   // put master-details
   const lenght: number | null = await putMasterDetail(
     workSheet,

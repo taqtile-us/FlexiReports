@@ -36,7 +36,8 @@ export interface IStaticVariables {
 interface ISimpleVariable {
   variable: string;
   address: string;
-  alignment: IAlignment
+  alignment: IAlignment;
+  insertedValue?: string;
 }
 
 export interface ISimpleVariables {

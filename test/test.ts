@@ -1,6 +1,6 @@
 import generate from '../src/index'
 import { promises as fsPromises } from 'fs';
-const templatePath = 'templates/with-diagram.xlsx';
+const templatePath = 'templates/with-diagram-2.xlsx';
 const reportPath = 'report.xlsx';
 const temporaryFolder = 'temporary';
 import fs from 'fs';
