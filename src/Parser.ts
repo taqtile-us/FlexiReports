@@ -1,5 +1,5 @@
 import Workbook from 'exceljs/index';
-import { IDetail } from './types';
+import {IDetail, IFormulas} from './types';
 
 const parseSimpleVariable = (str: string) => {
   const startDelimiter = '{{';
@@ -140,6 +140,88 @@ function extendRange(originalRange: string, extendNumber: number) {
   return newRange;
 }
 
+const createArrayIfNotExist = (list: any, entity: string) => {
+  if (!list[entity]) {
+    list[entity] = [];
+  }
+};
+
+async function parse(worksheet: Workbook.Worksheet) {
+  try {
+    const simpleVariables: any = {};
+    let master: any = null;
+    const details: any = {};
+    const formulas: IFormulas = { rowFormulas: [], columnFormulas: [], masterFormulas: [] };
+    const staticVariables: any = {};
+    let masterRowNumber: number = -1;
+    worksheet?.eachRow((row: Workbook.Worksheet.row, rowNumber: number) => {
+      row.eachCell((cell: Workbook.Worksheet.cell, colNumber: Workbook.Worksheet.colNumber) => {
+        const simpleVariable = getSimpleVariable(cell);
+        if (simpleVariable) {
+          createArrayIfNotExist(simpleVariables, simpleVariable.variable);
+          simpleVariables[simpleVariable.variable].push({
+            address: simpleVariable.address,
+            alignment: cell.alignment,
+            variable: simpleVariable.variable,
+          });
+        }
+        const complexVariable: IDetail | null = getComplexVariable(cell);
+        if (complexVariable) {
+          if (masterRowNumber === rowNumber && !master.addedToDetails) {
+            createArrayIfNotExist(details, master.entityName);
+            details[master.entityName].push(master);
+            master.addedToDetails = true;
+          }
+          if (complexVariable.type === 'master' && masterRowNumber === -1) {
+            master = complexVariable;
+
+            masterRowNumber = rowNumber;
+          }
+
+          if (complexVariable.type === 'detail') {
+            createArrayIfNotExist(details, complexVariable.entityName);
+            details[complexVariable.entityName].push(complexVariable);
+          }
+        }
+        const formula = getFormula(cell);
+
+        if (formula) {
+          if (isItRowFormula(formula.formula)) {
+            if (masterRowNumber === rowNumber) {
+              formulas.masterFormulas.push(formula);
+            } else {
+              formulas.rowFormulas.push(formula);
+            }
+          } else {
+            formulas.columnFormulas.push(formula);
+          }
+        }
+
+        if (!simpleVariable && !complexVariable && !formula) {
+          staticVariables[cell.address] = {
+            value: cell.value,
+            address: cell.address,
+            alignment: cell.alignment,
+          };
+        }
+      });
+    });
+
+    if (Object.keys(details).length === 0) {
+    }
+    return { simpleVariables, master, details, formulas, staticVariables };
+  } catch (err) {
+    console.error('Error parse the file:', err);
+    return {
+      simpleVariables: {},
+      master: {},
+      details: {},
+      formulas: { rowFormulas: [], columnFormulas: [], masterFormulas: [] },
+      staticVariables: {},
+    };
+  }
+}
+
 export {
   getSimpleVariable,
   getComplexVariable,
@@ -150,4 +232,5 @@ export {
   replaceSpecificNumberInFormula,
   addDifferenceToTheLastNumber,
   extendRange,
+  parse,
 };

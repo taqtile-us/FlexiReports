@@ -1,4 +1,5 @@
 import { writeDataToExcel } from './Templater';
+import { parse } from './Parser';
 
 export const generateExcelReport = async (dataToFill: any, filePath: string, reportPath: string, temporaryFolderPath: string) => {
   try {
@@ -10,3 +11,5 @@ export const generateExcelReport = async (dataToFill: any, filePath: string, rep
     return false;
   }
 };
+
+export {parse};

@@ -1,44 +1,23 @@
 import path from 'path';
 import Workbook from 'exceljs/index';
-import excel from 'exceljs';
 import { copyChart } from './copy-excel-chart/build/copyChart';
 import { readCharts, extractZip } from './copy-excel-chart/build/readCharts';
 import { writeCharts } from './copy-excel-chart/build/writeChart';
 import {
-  getSimpleVariable,
-  getComplexVariable,
-  getFormula,
   parseIntFromString,
   parseLetterFromString,
-  isItRowFormula,
   replaceSpecificNumberInFormula,
   addDifferenceToTheLastNumber,
-  extendRange,
+  extendRange, parse,
 } from './Parser';
 import { IDetail, IMaster, IDetails, IFormulas, IStaticVariables, ISimpleVariables } from './types';
 import { ISizeCalculationResult } from 'image-size/dist/types/interface';
+import { readFile } from "./Reader";
 
 const cellFont = { name: 'Arial', size: 11 };
 
 const fs = require('fs').promises;
 const sizeOf = require('image-size');
-
-async function readFile(path: string) {
-  try {
-    const workbook: Workbook = new excel.Workbook();
-    await workbook.xlsx.readFile(path);
-    return { workSheet: workbook.getWorksheet('template'), workbook };
-  } catch (err) {
-    console.error('Error reading the file:', err);
-    return null;
-  }
-}
-
-const createArrayIfNotExist = (list: any, entity: string) => {
-  if (!list[entity]) {
-    list[entity] = [];
-  }
-};
 
 const copyDiagramm = async (
   template: string,
@@ -75,82 +54,6 @@ const copyDiagramm = async (
     console.error(`Error copy diagramm: ${error.message}`);
   }
 };
-
-async function parse(worksheet: Workbook.Worksheet) {
-  try {
-    const simpleVariables: any = {};
-    let master: any = null;
-    const details: any = {};
-    const formulas: IFormulas = { rowFormulas: [], columnFormulas: [], masterFormulas: [] };
-    const staticVariables: any = {};
-    let masterRowNumber: number = -1;
-    worksheet?.eachRow((row: Workbook.Worksheet.row, rowNumber: number) => {
-      row.eachCell((cell: Workbook.Worksheet.cell, colNumber: Workbook.Worksheet.colNumber) => {
-        const simpleVariable = getSimpleVariable(cell);
-        if (simpleVariable) {
-          createArrayIfNotExist(simpleVariables, simpleVariable.variable);
-          simpleVariables[simpleVariable.variable].push({
-            address: simpleVariable.address,
-            alignment: cell.alignment,
-            variable: simpleVariable.variable,
-          });
-        }
-        const complexVariable: IDetail | null = getComplexVariable(cell);
-        if (complexVariable) {
-          if (masterRowNumber === rowNumber && !master.addedToDetails) {
-            createArrayIfNotExist(details, master.entityName);
-            details[master.entityName].push(master);
-            master.addedToDetails = true;
-          }
-          if (complexVariable.type === 'master' && masterRowNumber === -1) {
-            master = complexVariable;
-
-            masterRowNumber = rowNumber;
-          }
-
-          if (complexVariable.type === 'detail') {
-            createArrayIfNotExist(details, complexVariable.entityName);
-            details[complexVariable.entityName].push(complexVariable);
-          }
-        }
-        const formula = getFormula(cell);
-
-        if (formula) {
-          if (isItRowFormula(formula.formula)) {
-            if (masterRowNumber === rowNumber) {
-              formulas.masterFormulas.push(formula);
-            } else {
-              formulas.rowFormulas.push(formula);
-            }
-          } else {
-            formulas.columnFormulas.push(formula);
-          }
-        }
-
-        if (!simpleVariable && !complexVariable && !formula) {
-          staticVariables[cell.address] = {
-            value: cell.value,
-            address: cell.address,
-            alignment: cell.alignment,
-          };
-        }
-      });
-    });
-
-    if (Object.keys(details).length === 0) {
-    }
-    return { simpleVariables, master, details, formulas, staticVariables };
-  } catch (err) {
-    console.error('Error parse the file:', err);
-    return {
-      simpleVariables: {},
-      master: {},
-      details: {},
-      formulas: { rowFormulas: [], columnFormulas: [], masterFormulas: [] },
-      staticVariables: {},
-    };
-  }
-}
 
 async function putMasterDetail(
   worksheet: Workbook.Worksheet,
