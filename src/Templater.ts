@@ -258,7 +258,7 @@ const buildTemplate = async (
     formulas,
     staticVariables,
   );
-  if (lenght) {
+  if (lenght || lenght === 0) {
     await workbook.xlsx.writeFile(reportPath);
     await extractZip(reportPath, `${temporaryFolderPath}/forPictures`);
     // await fixPicturesSizes(reportPath, `${temporaryFolderPath}/forPictures`);
