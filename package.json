@@ -1,6 +1,6 @@
 {
   "name": "xlsx-constructor",
-  "version": "1.0.13",
+  "version": "1.0.15",
   "description": "Flexi reports",
   "main": "lib/index.js",
   "types": "src/index.d.ts",
@@ -38,6 +38,7 @@
     "exceljs": "^4.3.0",
     "image-size": "^1.0.2",
     "node-stream-zip": "^1.15.0",
+    "streamx": "^2.20.1",
     "xml2js": "^0.6.2"
   }
 }
